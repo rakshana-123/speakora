@@ -1,0 +1,6 @@
+{
+  "name": "AI Communication Coach",
+  "description": "Daily communication improvement platform with AI speaking coach, habit streaks, roleplay scenarios, and analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
