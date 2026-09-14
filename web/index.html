@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Speakora — AI Communication Coach. Daily speaking workouts, roleplay scenarios, vocabulary and analytics.">
+<title>Speakora — AI Communication Coach</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎤</text></svg>">
+<style>
+  :root {
+    --bg: #090D16; --surface: #111827; --surface2: #1F2937; --outline: #374151;
+    --text: #F8FAFC; --text2: #94A3B8;
+    --indigo: #4F46E5; --indigo-l: #6366F1; --indigo-bg: #312E81;
+    --cyan: #38BDF8; --flame: #F97316; --flame-d: #EA580C; --emerald: #10B981;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+    padding-bottom: 84px; min-height: 100vh;
+  }
+  header {
+    position: sticky; top: 0; z-index: 40; display: flex; align-items: center; gap: 10px;
+    padding: 14px 18px; background: rgba(9,13,22,.92); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--outline);
+  }
+  header .logo { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg,var(--indigo),var(--cyan)); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  header h1 { font-size: 17px; font-weight: 700; letter-spacing: .2px; }
+  header .sub { font-size: 11px; color: var(--text2); }
+  .streak-pill {
+    margin-left: auto; display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px;
+    background: linear-gradient(135deg,#7C2D12,#9A3412); border: 1px solid #EA580C;
+    padding: 7px 12px; border-radius: 999px;
+  }
+  main { max-width: 720px; margin: 0 auto; padding: 16px; }
+  .card { background: var(--surface); border: 1px solid var(--outline); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+  .card h3 { font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .muted { color: var(--text2); font-size: 13px; line-height: 1.55; }
+  .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); margin: 18px 2px 10px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* Hero / download */
+  .hero {
+    background: linear-gradient(140deg,#1E1B4B 0%,#0E7490 130%);
+    border: 1px solid var(--indigo); border-radius: 20px; padding: 22px; margin-bottom: 16px;
+  }
+  .hero h2 { font-size: 22px; line-height: 1.25; margin-bottom: 8px; }
+  .hero p { color: #C7D2FE; font-size: 13.5px; line-height: 1.6; margin-bottom: 16px; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
+    border: none; border-radius: 12px; padding: 12px 18px; font-size: 14px; font-weight: 700;
+    transition: transform .08s ease, filter .15s;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn-primary { background: var(--indigo); color: #fff; }
+  .btn-primary:hover { background: var(--indigo-l); }
+  .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--outline); }
+  .btn-sm { padding: 8px 14px; font-size: 13px; border-radius: 10px; }
+
+  /* XP bar */
+  .xp-wrap { display: flex; align-items: center; gap: 12px; }
+  .lvl-badge { min-width: 52px; height: 52px; border-radius: 14px; background: var(--indigo-bg); color:#A5B4FC; display:flex; flex-direction:column; align-items:center; justify-content:center; font-weight:800; }
+  .lvl-badge small { font-size: 9px; font-weight:600; }
+  .lvl-badge span { font-size: 18px; line-height: 1; }
+  .bar { flex: 1; height: 10px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+  .bar > div { height: 100%; background: linear-gradient(90deg,var(--indigo),var(--cyan)); border-radius: 99px; transition: width .4s; }
+
+  /* Skill cards */
+  .skill { background: var(--surface2); border-radius: 12px; padding: 12px; }
+  .skill .lbl { display: flex; justify-content: space-between; font-size: 12px; color: var(--text2); margin-bottom: 8px; }
+  .skill .lbl b { color: var(--text); font-size: 13px; }
+
+  /* Exercise list */
+  .ex-row { display: flex; gap: 12px; align-items: flex-start; background: var(--surface); border: 1px solid var(--outline); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; cursor: pointer; transition: border-color .15s; }
+  .ex-row:hover { border-color: var(--indigo); }
+  .ex-ico { width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 19px; background: var(--surface2); }
+  .ex-row h4 { font-size: 14px; margin-bottom: 3px; }
+  .ex-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 7px; }
+  .chip { font-size: 10.5px; padding: 3px 9px; border-radius: 99px; background: var(--surface2); color: var(--text2); border: 1px solid var(--outline); }
+  .chip.done { background: #064E3B; color: #6EE7B7; border-color: var(--emerald); }
+  .chip.xp { background: var(--indigo-bg); color: #A5B4FC; border-color: var(--indigo); }
+
+  /* Bottom nav */
+  nav {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; display: flex;
+    background: rgba(17,24,39,.97); backdrop-filter: blur(10px); border-top: 1px solid var(--outline);
+    padding: 8px 6px calc(8px + env(safe-area-inset-bottom)); max-width: 720px; margin: 0 auto;
+  }
+  nav button {
+    flex: 1; background: none; border: none; color: var(--text2); font-size: 10.5px; font-weight: 600;
+    display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; padding: 6px 0; border-radius: 10px;
+  }
+  nav button .ic { font-size: 20px; }
+  nav button.on { color: #A5B4FC; }
+
+  /* Modal */
+  .modal-bg { position: fixed; inset: 0; background: rgba(3,6,12,.72); z-index: 100; display: flex; align-items: flex-end; justify-content: center; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--outline); border-radius: 20px 20px 0 0;
+    width: 100%; max-width: 720px; max-height: 88vh; overflow-y: auto; padding: 18px 18px 26px;
+  }
+  .modal .close { float: right; background: var(--surface2); border: none; color: var(--text); width: 32px; height: 32px; border-radius: 99px; font-size: 15px; cursor: pointer; }
+  .opt { display: block; width: 100%; text-align: left; background: var(--surface2); color: var(--text); border: 1.5px solid var(--outline); border-radius: 12px; padding: 12px 14px; font-size: 13.5px; margin: 8px 0; cursor: pointer; line-height: 1.45; }
+  .opt:hover { border-color: var(--indigo-l); }
+  .opt.correct { border-color: var(--emerald); background: #064E3B; }
+  .opt.wrong { border-color: #EF4444; background: #450A0A; }
+  textarea { width: 100%; min-height: 110px; background: var(--surface2); color: var(--text); border: 1px solid var(--outline); border-radius: 12px; padding: 12px; font-size: 13.5px; resize: vertical; font-family: inherit; }
+  .feedback { border-radius: 12px; padding: 12px 14px; font-size: 13px; line-height: 1.55; margin-top: 10px; background: var(--indigo-bg); border: 1px solid var(--indigo); }
+  .feedback.green { background: #064E3B; border-color: var(--emerald); }
+  .timer { font-variant-numeric: tabular-nums; font-size: 26px; font-weight: 800; text-align: center; color: var(--cyan); margin: 10px 0; }
+
+  /* Chat */
+  #chatlog { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+  .msg { max-width: 85%; padding: 10px 14px; border-radius: 16px; font-size: 13.5px; line-height: 1.55; white-space: pre-wrap; }
+  .msg.bot { background: var(--surface2); border: 1px solid var(--outline); border-bottom-left-radius: 4px; align-self: flex-start; }
+  .msg.me { background: var(--indigo); border-bottom-right-radius: 4px; align-self: flex-end; }
+  .msg b { color: #A5B4FC; }
+  .chat-input { display: flex; gap: 8px; }
+  .chat-input input { flex: 1; background: var(--surface2); border: 1px solid var(--outline); color: var(--text); border-radius: 12px; padding: 12px 14px; font-size: 14px; outline: none; }
+  .chat-input input:focus { border-color: var(--indigo-l); }
+
+  /* Heatmap */
+  .heat { display: grid; grid-template-rows: repeat(7, 12px); grid-auto-flow: column; gap: 3px; overflow-x: auto; padding-bottom: 4px; }
+  .heat i { width: 12px; height: 12px; border-radius: 3px; background: var(--surface2); }
+  .heat i.l1 { background: #312E81; } .heat i.l2 { background: #4F46E5; } .heat i.l3 { background: #818CF8; }
+  .ach { display: flex; gap: 12px; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--outline); }
+  .ach:last-child { border-bottom: none; }
+  .ach .ic2 { width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 18px; background: var(--surface2); flex-shrink: 0; }
+  .ach.on .ic2 { background: #064E3B; }
+  .ach h5 { font-size: 13.5px; } .ach p { font-size: 11.5px; color: var(--text2); margin-top: 2px; }
+  .ach .bar { height: 6px; margin-top: 6px; }
+  .hide { display: none !important; }
+  footer { text-align: center; color: var(--text2); font-size: 11px; padding: 18px 0 8px; }
+  .kbd { font-size: 11px; background: var(--surface2); border: 1px solid var(--outline); padding: 2px 7px; border-radius: 6px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🎤</div>
+  <div>
+    <h1>Speakora</h1>
+    <div class="sub">AI Communication Coach</div>
+  </div>
+  <div class="streak-pill">🔥 <span id="hdStreak">0</span></div>
+</header>
+
+<main>
+
+  <!-- ============ HOME ============ -->
+  <section id="tab-home">
+    <div class="hero">
+      <h2>Find your voice.<br>Lead every room.</h2>
+      <p>Daily 10-minute communication workouts with an AI coach, roleplay scenarios, vocabulary training and habit streaks. Your progress is saved in this browser.</p>
+      <a class="btn btn-primary" href="speakora.apk" download>⬇️ &nbsp;Install the Android app (APK)</a>
+      <div class="muted" style="margin-top:10px;color:#A5B4FC">Same app, on your phone — debug build v1.0, Android 7.0+</div>
+    </div>
+
+    <div class="card">
+      <h3>⚡ Today's Workout</h3>
+      <div class="muted" id="workoutDesc" style="margin-bottom:12px"></div>
+      <div id="todayList"></div>
+    </div>
+
+    <div class="section-title">Your momentum</div>
+    <div class="card">
+      <div class="xp-wrap">
+        <div class="lvl-badge"><small>LVL</small><span id="lvl">1</span></div>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">
+            <span class="muted" id="xpLabel">0 XP</span><span class="muted" id="xpNext">500 XP to LVL 2</span>
+          </div>
+          <div class="bar"><div id="xpBar" style="width:0%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Skill scores</div>
+    <div class="grid2" id="skillCards"></div>
+  </section>
+
+  <!-- ============ PRACTICE ============ -->
+  <section id="tab-practice" class="hide">
+    <div class="section-title" style="margin-top:4px">Practice library — 13 drills</div>
+    <div id="exList"></div>
+  </section>
+
+  <!-- ============ COACH ============ -->
+  <section id="tab-coach" class="hide">
+    <div class="card" style="display:flex;gap:12px;align-items:center">
+      <div class="ex-ico" style="background:var(--indigo-bg)">🤖</div>
+      <div style="flex:1">
+        <b style="font-size:14px">Aura — Executive Speech Coach</b>
+        <div class="muted" id="coachStatus">On-device coach engine · no API key needed</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="keyBtn">🔑 Key</button>
+    </div>
+    <div class="card">
+      <div id="chatlog"></div>
+      <div class="chat-input">
+        <input id="chatbox" placeholder="Ask about filler words, interviews, emails…" autocomplete="off">
+        <button class="btn btn-primary" id="sendBtn">Send</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PROGRESS ============ -->
+  <section id="tab-progress" class="hide">
+    <div class="section-title" style="margin-top:4px">Activity — last 15 weeks</div>
+    <div class="card"><div class="heat" id="heat"></div></div>
+
+    <div class="section-title">Achievements</div>
+    <div class="card" id="achList"></div>
+
+    <div class="section-title">Vocabulary vault</div>
+    <div class="card" id="vocabList"></div>
+
+    <div class="card">
+      <h3>📱 Get the Android app</h3>
+      <p class="muted" style="margin-bottom:12px">Install the full native app with speech recording, waveform visualiser and Room-database streaks.</p>
+      <a class="btn btn-primary" href="speakora.apk" download>⬇️ &nbsp;Download Speakora APK (24 MB)</a>
+    </div>
+  </section>
+
+  <footer>Speakora · built from the Android (Kotlin · Compose) codebase · deployed on Render</footer>
+</main>
+
+<nav>
+  <button data-tab="home" class="on"><span class="ic">🏠</span>Home</button>
+  <button data-tab="practice"><span class="ic">🏋️</span>Practice</button>
+  <button data-tab="coach"><span class="ic">🤖</span>Coach</button>
+  <button data-tab="progress"><span class="ic">📈</span>Progress</button>
+</nav>
+
+<div class="modal-bg hide" id="modalBg"><div class="modal" id="modalBox"></div></div>
+
+<script>
+/* ================= Seed data (ported from app/src/main/java/com/example/data/local/SeedData.kt) ================= */
+const CATS = {
+  SPEAKING:["🗣️","Speaking"], PRONUNCIATION:["🔤","Pronunciation"], LISTENING:["👂","Listening"],
+  READING:["📖","Reading"], WRITING:["✍️","Writing"], VOCABULARY:["📚","Vocabulary"],
+  GRAMMAR:["⚙️","Grammar"], SCENARIO:["🎭","Scenario"], PUBLIC_SPEAKING:["📢","Public Speaking"],
+  DIFFICULT_CONVERSATION:["🥊","Difficult Talks"], NON_VERBAL:["🧍","Presence"]
+};
+const EXERCISES = [
+ {id:"spk_1",title:"Executive Self-Introduction",desc:"Deliver a sharp 45-second professional intro highlighting your core value and current focus.",cat:"SPEAKING",type:"RECORDING",diff:"Intermediate",dur:90,xp:40,
+  prompt:"Introduce yourself to a prospective client or senior executive in under 45 seconds using the Hook-Value-Vision framework.",
+  instr:"State your name, your primary expertise, a recent high-impact win, and what you are building towards. Keep your pace between 130-150 WPM and minimize filler words ('um', 'like').",
+  ideal:"Hi everyone, I'm Alex. Over the last five years, I've specialized in scaling real-time collaboration platforms that serve over a million users. Most recently, our team cut onboarding friction by 35%. Today, I'm passionate about building intuitive AI-assisted communication workflows."},
+ {id:"spk_2",title:"Handling Sudden Project Delays",desc:"Explain a timeline slip to stakeholders without sounding defensive or uncertain.",cat:"SPEAKING",type:"RECORDING",diff:"Advanced",dur:120,xp:45,
+  prompt:"You discovered that the third-party API integration will delay next week's beta release by 4 business days. Brief your leadership team.",
+  instr:"Deliver the news directly, state the primary technical bottleneck factually, outline the revised delivery milestone, and present two mitigation options."},
+ {id:"pron_1",title:"Strategic Vocabulary Stress & Cadence",desc:"Master multi-syllable pronunciation with accurate stress on key business terminology.",cat:"PRONUNCIATION",type:"PRON",diff:"Intermediate",dur:60,xp:30,
+  prompt:"We are particularly focused on strategically scaling our cloud infrastructure.",
+  instr:"Pay attention to the emphasized syllables (par-TIC-u-lar-ly, stra-TE-gi-cal-ly), then read it aloud clearly.",
+  expl:"Notice the stress falling on the second syllable of 'particularly' and the third syllable of 'infrastructure'."},
+ {id:"pron_2",title:"Connected Speech & Flap Consonants",desc:"Blend words naturally for effortless native-like conversational cadence.",cat:"PRONUNCIATION",type:"PRON",diff:"Beginner",dur:60,xp:25,
+  prompt:"As a matter of fact, we decided to put it all on the table.",
+  instr:"Focus on the linking sound between 'put it all' and 'matter of fact'. Repeat fluidly without robotic pauses.",
+  expl:"In fluid speech, 'matter of' connects with a quick flap-t sound: /'mædər əv/."},
+ {id:"list_1",title:"Executive Strategy Briefing",desc:"Listen to a director explaining Q4 priorities and extract key initiatives and emotional tone.",cat:"LISTENING",type:"QUIZ",diff:"Intermediate",dur:120,xp:35,
+  transcript:"Good morning team. While our enterprise pipeline is strong, customer retention in mid-market accounts dropped three percent last month. Consequently, we are pausing new feature development for two sprints to double down on stability, latency reductions, and core user delight.",
+  prompt:"What did the Product VP decide, and why?",
+  opts:["Launch three new features immediately","Pause new features for two sprints to resolve stability and retention issues","Increase sales marketing budget by 30%","Fire the mid-market support representatives"],
+  correct:1, expl:"The VP explicitly stated they are pausing new feature development for two sprints to focus on stability and latency."},
+ {id:"read_1",title:"The Architecture of Constructive Feedback",desc:"Read an executive communication memo and decipher implied intentions and structural cues.",cat:"READING",type:"QUIZ",diff:"Intermediate",dur:90,xp:30,
+  prompt:"Direct feedback without emotional empathy leads to cognitive shutdown, yet empathy without clarity produces stagnation. High-performing organizations establish 'Radical Candor'—the intersection where personal care permits direct challenge without triggering existential defensiveness.\n\nWhat is the author's primary argument?",
+  opts:["Empathy alone is the single most important factor in team happiness","Direct criticism should be eliminated in modern workplaces","Effective feedback requires combining genuine personal care with unambiguous direct challenge","Stagnation is preferable to cognitive shutdown"],
+  correct:2, expl:"The text identifies high performance at the intersection of caring personally while directly challenging assumptions."},
+ {id:"wri_1",title:"Assertive Scope-Boundary Email",desc:"Write a diplomatic reply to a client requesting extra features outside the contract scope.",cat:"WRITING",type:"WRITING",diff:"Intermediate",dur:180,xp:40,
+  prompt:"Client message: 'Hey team, can we also add automated invoice export and multi-currency billing into next week's release?' Write your polished response.",
+  instr:"Write a 3-sentence reply that acknowledges the request enthusiastically, clarifies that it falls outside current milestones, and proposes an add-on phase with an estimated timeline.",
+  ideal:"Thanks for sharing this idea—automated invoicing and multi-currency support will provide tremendous value. Because our current sprint is fully committed to delivering the core payment checkout, we can scope this out as an immediate Phase 2 enhancement starting next month. I'd be happy to share an updated roadmap and budget estimate by Thursday."},
+ {id:"voc_1",title:"Strategic Vocabulary: 'Leverage' & 'Pragmatic'",desc:"Select the most precise and impactful word to convey practical execution.",cat:"VOCABULARY",type:"QUIZ",diff:"Beginner",dur:60,xp:25,
+  prompt:"Rather than chasing speculative theories, the leadership team adopted a ________ approach based on verified customer telemetry.",
+  opts:["pragmatic","capricious","belligerent","superficial"], correct:0,
+  expl:"'Pragmatic' means dealing with things sensibly and realistically in a way that is based on practical rather than theoretical considerations."},
+ {id:"grm_1",title:"Conditional Clauses in Business Negotiations",desc:"Master subtle diplomatic conditionals to avoid premature contractual commitment.",cat:"GRAMMAR",type:"QUIZ",diff:"Intermediate",dur:60,xp:30,
+  prompt:"Which sentence correctly frames a hypothetical negotiation point without committing the company prematurely?",
+  opts:["If we would agree to that discount, we went bankrupt.","Were we to consider an annual commitment, we could explore tiered volume pricing.","If we will agree, we give you 20% off today.","Had we agree, you would get discount."],
+  correct:1, expl:"Inverted conditional ('Were we to consider...') creates a sophisticated, diplomatic tone ideal for high-level negotiations."},
+ {id:"scn_1",title:"Executive Roleplay: The Project Scope Pushback",desc:"Simulate a live conversation with an impatient Project Sponsor demanding an unachievable deadline.",cat:"SCENARIO",type:"ROLEPLAY",diff:"Advanced",dur:240,xp:50,
+  prompt:"Sponsor: \"Alex, we cannot move the October launch date. Our competitors are announcing next week. You just have to make it happen.\" How do you reply?",
+  instr:"Roleplay with the Sponsor. Maintain composure, validate their business urgency, and guide them toward a phased rollout without agreeing to impossible timelines.",
+  ideal:"I completely understand the market pressure from our competitors, and ensuring we capitalize on this launch window is our shared priority. To guarantee an October launch with zero downtime or security risks, let's prioritize the MVP features for the primary launch and release secondary integrations in an update two weeks later."},
+ {id:"pub_1",title:"The 2-Minute Innovation Pitch",desc:"Pitch an AI-driven workflow optimization to company stakeholders in 120 seconds.",cat:"PUBLIC_SPEAKING",type:"RECORDING",diff:"Advanced",dur:120,xp:50,
+  prompt:"Present the case for adopting an AI Communication Training tool across the sales and support organization.",
+  instr:"Focus on your opening hook, problem quantification, proposed solution, and clear call to action."},
+ {id:"dif_1",title:"Addressing Chronic Meeting Tardiness",desc:"Have a direct 1-on-1 discussion with a talented colleague who frequently arrives late to client calls.",cat:"DIFFICULT_CONVERSATION",type:"RECORDING",diff:"Intermediate",dur:90,xp:45,
+  prompt:"Deliver candid feedback to Jordan about arriving 10 minutes late to yesterday's client presentation.",
+  instr:"Use the SBI framework (Situation - Behavior - Impact). Focus on observable facts without personal attacks.",
+  ideal:"Jordan, I wanted to touch base regarding yesterday's presentation with Acme Corp. When you joined ten minutes after the scheduled start, the client asked if we were having organizational issues, which created initial friction before our pitch. Your technical demos are phenomenal, and having you fully set up when the call begins reinforces client confidence."},
+ {id:"non_1",title:"Executive Presence & Deliberate Pauses",desc:"Use strategic 2-second silence instead of filler words to project authority.",cat:"NON_VERBAL",type:"RECORDING",diff:"Beginner",dur:60,xp:35,
+  prompt:"Our revenue surged 40% this quarter [/] because we prioritized customer retention over reckless acquisition [/] and the data proves this model works.",
+  instr:"Whenever you see a slash [/], pause completely for two full seconds before continuing."}
+];
+const VOCAB = [
+ {w:"Articulate",ph:"/ɑːrˈtɪk.jə.lət/",pos:"adjective",m:"Able to express ideas clearly and effectively in speech or writing.",ex:"She gave an articulate and persuasive presentation on team velocity.",cat:"Communication"},
+ {w:"Pragmatic",ph:"/præɡˈmæt.ɪk/",pos:"adjective",m:"Dealing with things sensibly and realistically based on practical considerations.",ex:"We took a pragmatic stance during the budget negotiation.",cat:"Business"},
+ {w:"Conciliatory",ph:"/kənˈsɪl.i.ə.tɔːr.i/",pos:"adjective",m:"Intended to placate, pacify, or resolve animosity in a disagreement.",ex:"Her conciliatory remarks prevented the debate from spiraling into hostility.",cat:"Conflict Resolution"},
+ {w:"Substantiate",ph:"/səbˈstæn.ʃi.eɪt/",pos:"verb",m:"Provide evidence to support or prove the truth of a claim.",ex:"Please substantiate your ROI forecasts with historical retention metrics.",cat:"Professional"},
+ {w:"Resilient",ph:"/rɪˈzɪl.jənt/",pos:"adjective",m:"Able to withstand or recover quickly from difficult conditions.",ex:"The engineering squad proved remarkably resilient during unexpected traffic surges.",cat:"Leadership"},
+ {w:"Cognizant",ph:"/ˈkɑːɡ.nɪ.zənt/",pos:"adjective",m:"Having knowledge or being fully aware of something.",ex:"We must remain cognizant of the tight compliance deadlines.",cat:"Executive"}
+];
+const ACHS = [
+ {t:"First Step",d:"Completed your first daily communication practice session.",ic:"🚩",got:true,cur:1,tgt:1},
+ {t:"Consistency Habit",d:"Reached a 7-day practice streak.",ic:"🔥",got:true,cur:7,tgt:7},
+ {t:"Unbreakable Momentum",d:"Maintain a 30-day streak without missing a day.",ic:"⚡",got:false,cur:18,tgt:30},
+ {t:"Vocabulary Virtuoso",d:"Master 20 active professional communication words.",ic:"🎓",got:false,cur:12,tgt:20},
+ {t:"Filler Word Slayer",d:"5 speaking recordings with under 1 filler word per minute.",ic:"🎙️",got:true,cur:5,tgt:5},
+ {t:"Diplomatic Negotiator",d:"Successfully complete 5 complex roleplay scenarios.",ic:"🧠",got:false,cur:3,tgt:5}
+];
+
+/* ================= Local coach engine (ported from GeminiCoachService.kt) ================= */
+function localCoach(msg, goal="Career & Leadership"){
+  const l = msg.toLowerCase();
+  if (l.includes("filler")||l.includes("um")||l.includes("like"))
+    return "Filler words usually appear when our brain is thinking faster than our vocal cords or when we fear silence.\n\n• **The 2-Second Rule**: Replace 'um' with a silent pause and slow breath.\n• **Deliberate Articulation**: Speak 10% slower so your mind formulates the next clause in silence.\n• **Practice Anchor**: In today's speaking drill, tap your finger whenever you feel tempted to say 'like'.";
+  if (l.includes("interview"))
+    return "For high-stakes interviews, remember the **STAR Framework** (Situation, Task, Action, Result).\n\n• Dedicate 70% of your response time to **Action** and **Result**.\n• Quantify your impact: 'Saved 3 hours per sprint' sounds far more credible than 'made things faster'.\n\nWould you like to run a mock interview simulation right now in the Practice tab?";
+  if (l.includes("email")||l.includes("writing"))
+    return "Here is the golden standard for executive email communication:\n\n1. **BLUF (Bottom Line Up Front)**: State the core ask or update in sentence #1.\n2. **Bulletized Context**: Never write more than 3 consecutive sentences in a block.\n3. **Clear Next Steps**: Specify *who* does *what* by *when*.";
+  if (l.includes("harder")||l.includes("difficult"))
+    return "I've noted your preference! Your next daily workout will adjust to **Advanced**, featuring unscripted conflict resolution scenarios and faster cadence requirements.";
+  return "As your communication coach focusing on **"+goal+"**, my recommendation today is consistency.\n\n• Complete your 10-minute communication workout.\n• Focus on clean vocal projection without upward inflection at the end of statements.\n• Try one roleplay in the Scenarios section to practice assertive boundary setting!";
+}
+function localWriting(draft){
+  const words = draft.split(/\s+/).filter(Boolean).length;
+  const clear = /please|would|by\b/i.test(draft);
+  return {
+    feedback: words>50 ? "Good thoroughness, but slightly lengthy for rapid mobile readers. Streamline sentences to emphasize the decision point." : "Crisp and straightforward. Ideas are immediately accessible with minimal fluff.",
+    tone: clear ? "Assertive & Action-Oriented" : "Informative & Diplomatic",
+    rewritten:"Thank you for the update. To ensure alignment, our team will deliver the core milestones by Friday. Let me know if any adjustments are needed before we finalize."
+  };
+}
+function localRoleplay(reply){
+  const l = reply.toLowerCase();
+  return (l.includes("understand")||l.includes("agree")||l.includes("prioritize"))
+    ? ["I appreciate that you hear our urgency. If we release the MVP first in October, will the critical payment flow be 100% bug-free for launch day?","Strong empathetic validation! You diffused immediate panic and kept focus on solution delivery."]
+    : ["That sounds risky. Our board expects a comprehensive launch. What guarantees do we have that the team won't face further delays?","Tip: Anchor your response with factual milestones and clear mitigation steps to reassure senior stakeholders."];
+}
+
+/* ================= State ================= */
+const DAY = 86400000, TODAY = () => new Date().toISOString().slice(0,10);
+let S = JSON.parse(localStorage.getItem("speakora_state")||"null") || {xp:0, done:[], activity:{}, chat:[], skills:{SPEAKING:62,PRONUNCIATION:58,LISTENING:71,READING:66,WRITING:54,VOCABULARY:60,GRAMMAR:48,SCENARIO:44,PUBLIC_SPEAKING:41,DIFFICULT_CONVERSATION:39,NON_VERBAL:52}};
+const save = () => localStorage.setItem("speakora_state", JSON.stringify(S));
+function streak(){
+  let n=0, d=new Date();
+  if(!S.activity[d.toISOString().slice(0,10)]) d = new Date(d-DAY); // allow yesterday-based streak
+  while(S.activity[d.toISOString().slice(0,10)]){ n++; d = new Date(d-DAY); }
+  return n;
+}
+function completeEx(ex, skillBump=2){
+  if(S.done.includes(ex.id)) return false;
+  S.done.push(ex.id);
+  S.xp += ex.xp;
+  S.activity[TODAY()] = (S.activity[TODAY()]||0)+1;
+  if(S.skills[ex.cat]!=null) S.skills[ex.cat] = Math.min(100, S.skills[ex.cat]+skillBump);
+  save(); renderAll();
+  return true;
+}
+const lvlOf = xp => Math.floor(xp/500)+1;
+
+/* ================= Render ================= */
+const $ = id => document.getElementById(id);
+function renderHeader(){
+  $("hdStreak").textContent = streak();
+  const lvl = lvlOf(S.xp), into = S.xp%500;
+  $("lvl").textContent = lvl;
+  $("xpLabel").textContent = S.xp+" XP · "+S.done.length+"/"+EXERCISES.length+" drills";
+  $("xpNext").textContent = (500-into)+" XP to LVL "+(lvl+1);
+  $("xpBar").style.width = (into/5)+"%";
+}
+function renderHome(){
+  const pool = EXERCISES.filter(e=>!S.done.includes(e.id));
+  const today = (pool.length?pool:EXERCISES).sort(()=>Math.random()-.5).slice(0,3);
+  $("workoutDesc").textContent = "3 drills · about 10 minutes · earn "+today.reduce((a,e)=>a+e.xp,0)+" XP";
+  $("todayList").innerHTML = today.map(e=>exRow(e,true)).join("") || '<div class="muted">All drills complete — legendary! 🏆</div>';
+  bindRows("todayList");
+  $("skillCards").innerHTML = Object.entries(S.skills).slice(0,6).map(([c,v])=>`
+    <div class="skill"><div class="lbl"><b>${CATS[c][0]} ${CATS[c][1]}</b><span>${Math.round(v)}</span></div>
+    <div class="bar"><div style="width:${v}%"></div></div></div>`).join("");
+}
+function exRow(e, mini){
+  const done = S.done.includes(e.id);
+  return `<div class="ex-row" data-ex="${e.id}">
+    <div class="ex-ico">${CATS[e.cat][0]}</div>
+    <div style="flex:1">
+      <h4>${e.title}</h4>
+      <div class="muted">${mini?"":e.desc+" "}</div>
+      <div class="ex-meta">
+        <span class="chip">${CATS[e.cat][1]}</span>
+        <span class="chip">${e.diff}</span>
+        <span class="chip">⏱ ${e.dur>=60? Math.round(e.dur/60)+" min": e.dur+" s"}</span>
+        <span class="chip xp">+${e.xp} XP</span>
+        ${done?'<span class="chip done">✓ done</span>':""}
+      </div>
+    </div></div>`;
+}
+function renderPractice(){
+  $("exList").innerHTML = EXERCISES.map(e=>exRow(e)).join("");
+  bindRows("exList");
+}
+function bindRows(id){
+  $(id).querySelectorAll(".ex-row").forEach(r=>r.onclick=()=>openExercise(r.dataset.ex));
+}
+function renderProgress(){
+  // heatmap: 15 weeks ending today
+  const cells=[]; const now=new Date(); const end=new Date(now);
+  end.setDate(end.getDate() + (7-now.getDay()%7)); // to Saturday
+  const start=new Date(end-105*DAY);
+  for(let d=new Date(start); d<=end; d=new Date(d.getTime()+DAY)){
+    const k=d.toISOString().slice(0,10), c=S.activity[k]||0;
+    cells.push(`<i class="${c>=3?'l3':c===2?'l2':c===1?'l1':''}" title="${k}: ${c} drill(s)"></i>`);
+  }
+  $("heat").innerHTML = cells.join("");
+  const sd = streak();
+  $("achList").innerHTML = ACHS.map(a=>{
+    const got = a.got || (a.ic==="🔥"&&sd>=7) || (a.ic==="🚩"&&S.done.length>=1) || (a.ic==="🧠"&&S.done.filter(x=>x==="scn_1").length>=1);
+    const cur = a.ic==="🔥"?Math.max(a.cur,sd): a.ic==="🚩"?Math.max(a.cur,Math.min(S.done.length,1)) : a.cur;
+    return `<div class="ach ${got?'on':''}"><div class="ic2">${a.ic}</div>
+      <div style="flex:1"><h5>${a.t} ${got?'<span class="chip done">unlocked</span>':""}</h5><p>${a.d}</p>
+      <div class="bar"><div style="width:${Math.min(100,cur/a.tgt*100)}%"></div></div></div></div>`;
+  }).join("");
+  $("vocabList").innerHTML = VOCAB.map(v=>`
+    <div style="padding:11px 0;border-bottom:1px solid var(--outline)">
+      <b style="font-size:14px">${v.w}</b> <span class="muted">${v.ph} · ${v.pos}</span>
+      <div class="muted" style="margin-top:4px">${v.m}</div>
+      <div class="muted" style="margin-top:4px;font-style:italic">"${v.ex}"</div>
+      <span class="chip" style="margin-top:7px;display:inline-block">${v.cat}</span>
+    </div>`).join("");
+}
+function renderAll(){ renderHeader(); renderHome(); renderPractice(); renderProgress(); }
+
+/* ================= Exercise modal ================= */
+let timerInt=null, currentEx=null;
+function openExercise(id){
+  const e = EXERCISES.find(x=>x.id===id);
+  currentEx = e;
+  const m = $("modalBox");
+  m.innerHTML = `<button class="close" id="mClose">✕</button>
+    <h3 style="font-size:17px;margin:4px 22px 2px 0">${CATS[e.cat][0]} ${e.title}</h3>
+    <div class="ex-meta" style="margin-bottom:12px">
+      <span class="chip">${CATS[e.cat][1]}</span><span class="chip">${e.diff}</span>
+      <span class="chip">⏱ ${e.dur>=60?Math.round(e.dur/60)+" min":e.dur+" s"}</span><span class="chip xp">+${e.xp} XP</span>
+    </div>
+    ${e.instr?`<div class="feedback">📋 ${e.instr}</div>`:""}
+    <div id="mBody" style="margin-top:12px"></div>`;
+  $("modalBg").classList.remove("hide");
+  $("mClose").onclick = closeExercise;
+  const body = m.querySelector("#mBody");
+
+  if(e.type==="QUIZ"){
+    body.innerHTML = `${e.transcript?`<div class="feedback" style="background:var(--surface2);border-color:var(--outline)">🎧 ${e.transcript}</div>`:""}
+      <p style="font-size:14px;line-height:1.6;margin:10px 0;white-space:pre-wrap">${e.prompt}</p>
+      <div id="opts"></div><div id="quizFb"></div>`;
+    const opts = body.querySelector("#opts");
+    let answered=false;
+    e.opts.forEach((o,i)=>{
+      const b=document.createElement("button"); b.className="opt"; b.textContent=o;
+      b.onclick=()=>{
+        if(answered) return; answered=true;
+        const ok = i===e.correct;
+        [...opts.children].forEach((c,j)=>{ if(j===e.correct) c.classList.add("correct"); else if(j===i) c.classList.add("wrong"); });
+        body.querySelector("#quizFb").innerHTML =
+          `<div class="feedback ${ok?'green':''}">${ok?"✅ Correct!":"❌ Not quite."} ${e.expl}</div>
+           ${doneBtn(e)}`;
+        if(ok) completeEx(e,3);
+        bindDone(body);
+      };
+      opts.appendChild(b);
+    });
+  }
+  else if(e.type==="WRITING"){
+    body.innerHTML = `<p style="font-size:14px;line-height:1.6;margin-bottom:10px;white-space:pre-wrap">${e.prompt}</p>
+      <textarea id="draft" placeholder="Write your response here…"></textarea>
+      <div style="margin-top:10px"><button class="btn btn-primary btn-sm" id="evalBtn">Evaluate draft</button></div>
+      <div id="wFb"></div>`;
+    body.querySelector("#evalBtn").onclick=()=>{
+      const d = body.querySelector("#draft").value.trim();
+      if(d.length<20){ alert("Write a bit more so the coach has something to chew on 🙂"); return; }
+      const r = localWriting(d);
+      body.querySelector("#wFb").innerHTML = `
+        <div class="feedback"><b>FEEDBACK:</b> ${r.feedback}<br><br><b>TONE:</b> ${r.tone}<br><br><b>REWRITTEN (executive polish):</b><br>${r.rewritten}</div>
+        ${doneBtn(e)}`;
+      completeEx(e,2); bindDone(body);
+    };
+  }
+  else if(e.type==="ROLEPLAY"){
+    body.innerHTML = `<p style="font-size:13.5px;line-height:1.6;margin-bottom:10px">${e.prompt}</p>
+      <div id="rpLog"></div>
+      <div class="chat-input" style="margin-top:10px"><input id="rpIn" placeholder="Your reply to the Sponsor…"><button class="btn btn-primary btn-sm" id="rpSend">Send</button></div>
+      <div id="rpDone" style="margin-top:10px"></div>`;
+    const log=body.querySelector("#rpLog");
+    let turns=0;
+    const send=()=>{
+      const v=body.querySelector("#rpIn").value.trim(); if(!v) return;
+      body.querySelector("#rpIn").value="";
+      log.innerHTML+=`<div class="msg me">${esc(v)}</div>`;
+      const [reply,tip]=localRoleplay(v); turns++;
+      log.innerHTML+=`<div class="msg bot"><b>SPONSOR:</b> ${esc(reply)}<br><br><i>💡 COACH TIP: ${esc(tip)}</i></div>`;
+      if(turns>=2 && !S.done.includes(e.id)){
+        body.querySelector("#rpDone").innerHTML = doneBtn(e);
+        completeEx(e,3); bindDone(body);
+      }
+    };
+    body.querySelector("#rpSend").onclick=send;
+    body.querySelector("#rpIn").onkeydown=ev=>{ if(ev.key==="Enter") send(); };
+  }
+  else { // RECORDING / PRON
+    body.innerHTML = `<p style="font-size:15px;line-height:1.7;margin:6px 0 12px;white-space:pre-wrap">${e.prompt}</p>
+      <div class="timer" id="tDisp">00:${String(e.dur%60).padStart(2,"0")}</div>
+      <div style="display:flex;gap:8px;justify-content:center">
+        <button class="btn btn-ghost btn-sm" id="tBtn">▶ Start drill timer</button>
+      </div>
+      <div id="rFb" style="margin-top:12px">${e.ideal?`<details><summary class="muted" style="cursor:pointer">👀 Show model answer</summary><div class="feedback" style="margin-top:8px">${e.ideal}</div></details>`:""}
+      <div style="margin-top:10px">${doneBtn(e)}</div></div>`;
+    let left=e.dur, run=false;
+    const disp=()=>{ const m2=String(Math.floor(left/60)).padStart(2,"0"), s2=String(left%60).padStart(2,"0"); body.querySelector("#tDisp").textContent=m2+":"+s2; };
+    body.querySelector("#tBtn").onclick=()=>{
+      run=!run;
+      body.querySelector("#tBtn").textContent = run?"⏸ Pause":"▶ Start drill timer";
+      clearInterval(timerInt);
+      if(run) timerInt=setInterval(()=>{ if(left>0){left--; disp();} if(left===0){ clearInterval(timerInt); run=false; body.querySelector("#tBtn").textContent="▶ Restart"; left=e.dur; } },1000);
+    };
+    bindDone(body);
+  }
+}
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const doneBtn = e => S.done.includes(e.id)
+  ? '<button class="btn btn-ghost btn-sm" id="doneB">✓ Completed — +'+e.xp+' XP</button>'
+  : '<button class="btn btn-primary btn-sm" id="doneB">Mark complete · +'+e.xp+' XP</button>';
+function bindDone(scope){ const b=scope.querySelector("#doneB"); if(!b) return;
+  b.onclick=()=>{ if(currentEx) completeEx(currentEx,2); b.textContent="✓ Completed — +"+currentEx.xp+" XP"; };
+}
+function closeExercise(){ clearInterval(timerInt); $("modalBg").classList.add("hide"); }
+
+/* ================= Coach chat ================= */
+async function callGemini(key, prompt){
+  const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key="+encodeURIComponent(key),{
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({contents:[{parts:[{text:prompt}]}]})});
+  if(!r.ok) throw new Error("HTTP "+r.status);
+  const j = await r.json();
+  return j?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+}
+function addMsg(cls, text){
+  const d=document.createElement("div"); d.className="msg "+cls; d.innerHTML=text; $("chatlog").appendChild(d);
+  d.scrollIntoView({behavior:"smooth"});
+  return d;
+}
+async function sendChat(){
+  const v=$("chatbox").value.trim(); if(!v) return;
+  $("chatbox").value="";
+  addMsg("me", esc(v));
+  const key=localStorage.getItem("gemini_key")||"";
+  if(key && key!=="MY_GEMINI_API_KEY"){
+    const typing=addMsg("bot","…");
+    try{
+      const out=await callGemini(key, "You are 'Aura', an elite AI Executive Communication & Speech Coach. Keep feedback concise, actionable, and encouraging. Use bullet points or 2-3 short paragraphs.\n\nUser: "+v);
+      typing.innerHTML = out || localCoach(v);
+      S.chat.push([v, out||localCoach(v)]); save(); return;
+    }catch(err){ typing.remove(); }
+  }
+  const reply=localCoach(v);
+  setTimeout(()=>addMsg("bot", md(reply)), 350);
+  S.chat.push([v, reply]); save();
+}
+const md = t => esc(t).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>");
+$("sendBtn").onclick=sendChat;
+$("chatbox").addEventListener("keydown",e=>{ if(e.key==="Enter") sendChat(); });
+$("keyBtn").onclick=()=>{
+  const k=prompt("Optional: paste a Gemini API key (https://aistudio.google.com/apikey) to upgrade Aura to live AI. Leave empty to keep the on-device engine. The key is stored only in your browser's localStorage.", localStorage.getItem("gemini_key")||"");
+  if(k!==null){ localStorage.setItem("gemini_key",k.trim());
+    $("coachStatus").textContent = (k.trim()&&k.trim()!=="MY_GEMINI_API_KEY") ? "Live Gemini AI connected 🔑" : "On-device coach engine · no API key needed"; }
+};
+
+/* ================= Nav ================= */
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));
+  ["home","practice","coach","progress"].forEach(t=>$("tab-"+t).classList.toggle("hide", t!==b.dataset.tab));
+  window.scrollTo({top:0});
+});
+$("modalBg").addEventListener("click",e=>{ if(e.target.id==="modalBg") closeExercise(); });
+
+/* ================= Boot ================= */
+(function boot(){
+  if(!S.chat.length){ S.chat.push(["","Welcome! I'm **Aura**, your executive communication coach. Ask me about killing filler words, nailing interviews, writing sharper emails — or hit **Practice** for today's 10-minute workout. 🎯"]); save(); }
+  S.chat.slice(0,8).forEach(([u,b])=>{ if(u==="") addMsg("bot", md(b)); else { addMsg("me",esc(u)); addMsg("bot",md(b)); } });
+  renderAll();
+})();
+</script>
+</body>
+</html>

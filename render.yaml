@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: speakora
+    runtime: static
+    buildCommand: echo "Static site — no build step required"
+    staticPublishPath: ./web
+    headers:
+      - path: /speakora.apk
+        name: Content-Type
+        value: application/vnd.android.package-archive
+      - path: /speakora.apk
+        name: Content-Disposition
+        value: attachment; filename="speakora.apk"
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
