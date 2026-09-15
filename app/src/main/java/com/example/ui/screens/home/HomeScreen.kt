@@ -117,7 +117,7 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = "Good morning, ${userProfile.name.substringBefore(" ")}",
+                            text = "Good morning, ${userProfile.name.substringBefore(" ").ifBlank { "there" }}",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface

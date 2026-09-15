@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="Speakora — AI Communication Coach. Daily speaking workouts, roleplay scenarios, vocabulary and analytics.">
+<meta name="theme-color" content="#090D16">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
 <title>Speakora — AI Communication Coach</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎤</text></svg>">
 <style>
@@ -305,12 +309,12 @@ const VOCAB = [
  {w:"Cognizant",ph:"/ˈkɑːɡ.nɪ.zənt/",pos:"adjective",m:"Having knowledge or being fully aware of something.",ex:"We must remain cognizant of the tight compliance deadlines.",cat:"Executive"}
 ];
 const ACHS = [
- {t:"First Step",d:"Completed your first daily communication practice session.",ic:"🚩",got:true,cur:1,tgt:1},
- {t:"Consistency Habit",d:"Reached a 7-day practice streak.",ic:"🔥",got:true,cur:7,tgt:7},
- {t:"Unbreakable Momentum",d:"Maintain a 30-day streak without missing a day.",ic:"⚡",got:false,cur:18,tgt:30},
- {t:"Vocabulary Virtuoso",d:"Master 20 active professional communication words.",ic:"🎓",got:false,cur:12,tgt:20},
- {t:"Filler Word Slayer",d:"5 speaking recordings with under 1 filler word per minute.",ic:"🎙️",got:true,cur:5,tgt:5},
- {t:"Diplomatic Negotiator",d:"Successfully complete 5 complex roleplay scenarios.",ic:"🧠",got:false,cur:3,tgt:5}
+ {t:"First Step",d:"Completed your first daily communication practice session.",ic:"🚩",got:false,cur:0,tgt:1},
+ {t:"Consistency Habit",d:"Reached a 7-day practice streak.",ic:"🔥",got:false,cur:0,tgt:7},
+ {t:"Unbreakable Momentum",d:"Maintain a 30-day streak without missing a day.",ic:"⚡",got:false,cur:0,tgt:30},
+ {t:"Vocabulary Virtuoso",d:"Master 20 active professional communication words.",ic:"🎓",got:false,cur:0,tgt:20},
+ {t:"Filler Word Slayer",d:"5 speaking recordings with under 1 filler word per minute.",ic:"🎙️",got:false,cur:0,tgt:5},
+ {t:"Diplomatic Negotiator",d:"Successfully complete 5 complex roleplay scenarios.",ic:"🧠",got:false,cur:0,tgt:5}
 ];
 
 /* ================= Local coach engine (ported from GeminiCoachService.kt) ================= */
@@ -344,7 +348,7 @@ function localRoleplay(reply){
 
 /* ================= State ================= */
 const DAY = 86400000, TODAY = () => new Date().toISOString().slice(0,10);
-let S = JSON.parse(localStorage.getItem("speakora_state")||"null") || {xp:0, done:[], activity:{}, chat:[], skills:{SPEAKING:62,PRONUNCIATION:58,LISTENING:71,READING:66,WRITING:54,VOCABULARY:60,GRAMMAR:48,SCENARIO:44,PUBLIC_SPEAKING:41,DIFFICULT_CONVERSATION:39,NON_VERBAL:52}};
+let S = JSON.parse(localStorage.getItem("speakora_state")||"null") || {xp:0, done:[], activity:{}, chat:[], skills:{SPEAKING:0,PRONUNCIATION:0,LISTENING:0,READING:0,WRITING:0,VOCABULARY:0,GRAMMAR:0,SCENARIO:0,PUBLIC_SPEAKING:0,DIFFICULT_CONVERSATION:0,NON_VERBAL:0}};
 const save = () => localStorage.setItem("speakora_state", JSON.stringify(S));
 function streak(){
   let n=0, d=new Date();
@@ -380,8 +384,9 @@ function renderHome(){
   $("todayList").innerHTML = today.map(e=>exRow(e,true)).join("") || '<div class="muted">All drills complete — legendary! 🏆</div>';
   bindRows("todayList");
   $("skillCards").innerHTML = Object.entries(S.skills).slice(0,6).map(([c,v])=>`
-    <div class="skill"><div class="lbl"><b>${CATS[c][0]} ${CATS[c][1]}</b><span>${Math.round(v)}</span></div>
-    <div class="bar"><div style="width:${v}%"></div></div></div>`).join("");
+    <div class="skill"><div class="lbl"><b>${CATS[c][0]} ${CATS[c][1]}</b><span>${Math.round(v) || "—"}</span></div>
+    <div class="bar"><div style="width:${v}%"></div></div></div>`).join("")
+    + (S.done.length===0 ? `<div class="skill" style="grid-column:1/-1;text-align:center;padding:18px"><span class="muted">🌱 Your skill scores start empty — complete drills and they grow with every session.</span></div>` : "");
 }
 function exRow(e, mini){
   const done = S.done.includes(e.id);
@@ -416,6 +421,9 @@ function renderProgress(){
     cells.push(`<i class="${c>=3?'l3':c===2?'l2':c===1?'l1':''}" title="${k}: ${c} drill(s)"></i>`);
   }
   $("heat").innerHTML = cells.join("");
+  if(S.done.length===0){
+    $("heat").insertAdjacentHTML("afterend", '<div class="muted" style="text-align:center;padding:8px 0 2px">No activity yet — your streak lights up with your first completed drill 🔥</div>');
+  }
   const sd = streak();
   $("achList").innerHTML = ACHS.map(a=>{
     const got = a.got || (a.ic==="🔥"&&sd>=7) || (a.ic==="🚩"&&S.done.length>=1) || (a.ic==="🧠"&&S.done.filter(x=>x==="scn_1").length>=1);
@@ -587,6 +595,9 @@ $("modalBg").addEventListener("click",e=>{ if(e.target.id==="modalBg") closeExer
 
 /* ================= Boot ================= */
 (function boot(){
+  if("serviceWorker" in navigator && location.protocol === "https:"){
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  }
   if(!S.chat.length){ S.chat.push(["","Welcome! I'm **Aura**, your executive communication coach. Ask me about killing filler words, nailing interviews, writing sharper emails — or hit **Practice** for today's 10-minute workout. 🎯"]); save(); }
   S.chat.slice(0,8).forEach(([u,b])=>{ if(u==="") addMsg("bot", md(b)); else { addMsg("me",esc(u)); addMsg("bot",md(b)); } });
   renderAll();

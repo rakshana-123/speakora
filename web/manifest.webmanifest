@@ -1,0 +1,14 @@
+{
+  "name": "Speakora — AI Communication Coach",
+  "short_name": "Speakora",
+  "description": "Daily communication workouts with an AI speaking coach, streaks, roleplay scenarios and analytics.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#090D16",
+  "theme_color": "#090D16",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

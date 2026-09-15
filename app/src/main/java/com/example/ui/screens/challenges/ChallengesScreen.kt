@@ -209,50 +209,33 @@ fun ChallengesScreen(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                val leaders = listOf(
-                    Triple("1", "Maya Lin", 3420),
-                    Triple("2", "Alex Chen (You)", userProfile.xp),
-                    Triple("3", "David Kim", 2600),
-                    Triple("4", "Priya Sharma", 2450)
-                )
-
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    leaders.forEach { (rank, name, xp) ->
-                        val isUser = name.contains("You")
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(
-                                    if (isUser) MaterialTheme.colorScheme.primaryContainer
-                                    else MaterialTheme.colorScheme.surfaceVariant
-                                )
-                                .padding(horizontal = 14.dp, vertical = 10.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "#$rank",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (rank == "1") Color(0xFFD97706) else MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(
-                                    text = name,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = if (isUser) FontWeight.Bold else FontWeight.Medium
-                                )
-                            }
-                            Text(
-                                text = "$xp XP",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = PrimaryIndigo
-                            )
-                        }
-                    }
+                val weeklyXp = userProfile.xp
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "You",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "$weeklyXp XP",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = PrimaryIndigo
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Cohort rankings unlock once friends join your circle",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }

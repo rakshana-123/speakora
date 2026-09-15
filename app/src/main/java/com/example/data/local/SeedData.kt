@@ -251,7 +251,7 @@ object SeedData {
             synonyms = listOf("eloquent", "fluent", "lucid", "coherent"),
             category = "Communication",
             difficulty = "Intermediate",
-            masteryLevel = 3
+            masteryLevel = 0
         ),
         VocabularyWord(
             id = "v_2",
@@ -263,7 +263,7 @@ object SeedData {
             synonyms = listOf("practical", "realistic", "sensible", "down-to-earth"),
             category = "Business",
             difficulty = "Intermediate",
-            masteryLevel = 2
+            masteryLevel = 0
         ),
         VocabularyWord(
             id = "v_3",
@@ -275,7 +275,7 @@ object SeedData {
             synonyms = listOf("appeasing", "pacifying", "diplomatic", "peacemaking"),
             category = "Conflict Resolution",
             difficulty = "Advanced",
-            masteryLevel = 1
+            masteryLevel = 0
         ),
         VocabularyWord(
             id = "v_4",
@@ -287,7 +287,7 @@ object SeedData {
             synonyms = listOf("validate", "corroborate", "authenticate", "verify"),
             category = "Professional",
             difficulty = "Advanced",
-            masteryLevel = 2
+            masteryLevel = 0
         ),
         VocabularyWord(
             id = "v_5",
@@ -299,7 +299,7 @@ object SeedData {
             synonyms = listOf("tenacious", "adaptable", "buoyant", "robust"),
             category = "Leadership",
             difficulty = "Intermediate",
-            masteryLevel = 4
+            masteryLevel = 0
         ),
         VocabularyWord(
             id = "v_6",
@@ -311,7 +311,7 @@ object SeedData {
             synonyms = listOf("aware", "conscious", "mindful", "informed"),
             category = "Executive",
             difficulty = "Intermediate",
-            masteryLevel = 1
+            masteryLevel = 0
         )
     )
 
@@ -321,9 +321,9 @@ object SeedData {
             title = "First Step",
             description = "Completed your first daily communication practice session.",
             icon = "Flag",
-            isUnlocked = true,
-            unlockedAt = "2026-09-01",
-            currentProgress = 1,
+            isUnlocked = false,
+            unlockedAt = null,
+            currentProgress = 0,
             targetProgress = 1,
             xpReward = 50
         ),
@@ -332,9 +332,9 @@ object SeedData {
             title = "Consistency Habit",
             description = "Reached a 7-day practice streak.",
             icon = "LocalFireDepartment",
-            isUnlocked = true,
-            unlockedAt = "2026-09-07",
-            currentProgress = 7,
+            isUnlocked = false,
+            unlockedAt = null,
+            currentProgress = 0,
             targetProgress = 7,
             xpReward = 150
         ),
@@ -344,7 +344,8 @@ object SeedData {
             description = "Maintain a 30-day streak without missing a day.",
             icon = "Whatshot",
             isUnlocked = false,
-            currentProgress = 18,
+            unlockedAt = null,
+            currentProgress = 0,
             targetProgress = 30,
             xpReward = 500
         ),
@@ -354,7 +355,8 @@ object SeedData {
             description = "Master 20 active professional communication words.",
             icon = "School",
             isUnlocked = false,
-            currentProgress = 12,
+            unlockedAt = null,
+            currentProgress = 0,
             targetProgress = 20,
             xpReward = 250
         ),
@@ -363,9 +365,9 @@ object SeedData {
             title = "Filler Word Slayer",
             description = "Deliver 5 speaking recordings with under 1 filler word per minute.",
             icon = "Mic",
-            isUnlocked = true,
-            unlockedAt = "2026-09-11",
-            currentProgress = 5,
+            isUnlocked = false,
+            unlockedAt = null,
+            currentProgress = 0,
             targetProgress = 5,
             xpReward = 200
         ),
@@ -375,7 +377,8 @@ object SeedData {
             description = "Successfully complete 5 complex roleplay scenarios.",
             icon = "Psychology",
             isUnlocked = false,
-            currentProgress = 3,
+            unlockedAt = null,
+            currentProgress = 0,
             targetProgress = 5,
             xpReward = 300
         )

@@ -135,7 +135,7 @@ class CoachViewModel(application: Application) : AndroidViewModel(application) {
             ChatMessage(
                 id = "msg_1",
                 senderName = "Aura (AI Coach)",
-                text = "Hello Alex! I'm Aura, your AI Communication Coach. I've prepared today's 10-minute executive session focusing on clarity and filler-word reduction. How can I help you sharpen your delivery today?",
+                text = "Welcome! I'm Aura, your AI Communication Coach. I've prepared today's 10-minute executive session focusing on clarity and filler-word reduction. How can I help you sharpen your delivery today?",
                 isFromUser = false,
                 suggestions = listOf(
                     "Give me today's speaking practice",

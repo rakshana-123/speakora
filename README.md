@@ -19,6 +19,28 @@ The `render.yaml` blueprint at the repo root deploys `web/` as a free static sit
   evaluation, roleplay chat, speaking drills with timers), Aura coach chat,
   XP/levels/streaks with localStorage persistence, heatmap and achievements
 
+## CI/CD pipeline
+
+```
+push / PR to main
+      │
+      ▼
+GitHub Actions (.github/workflows/ci-cd.yml)
+  • CI : ./gradlew assembleDebug (compile check, APK artifact on every PR/push)
+  • CD : on main → copies the fresh APK into web/speakora.apk and commits it
+      │
+      ▼
+Render auto-deploy (autoDeploy: yes on the static site)
+  • Live site + APK download updated automatically
+```
+
+- **Live site:** https://speakora-tjjz.onrender.com
+- The workflow commit carries `[skip ci]` so the pipeline never loops.
+- The debug keystore is committed intentionally: debug keys are public
+  (`android`/`androiddebugkey`) and CI needs a stable signing identity so
+  updated APKs install over previous ones without uninstalling.
+- PRs get the built APK as a downloadable artifact; nothing deploys from a PR.
+
 ## Build the Android app
 
 ```bash

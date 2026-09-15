@@ -15,4 +15,4 @@
 .cxx
 local.properties
 .env
-debug.keystore
+# debug.keystore is committed on purpose: debug keys are public and CI needs a stable signing identity

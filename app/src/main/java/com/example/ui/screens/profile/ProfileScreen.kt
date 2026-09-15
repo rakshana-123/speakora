@@ -113,7 +113,9 @@ fun ProfileScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "AC",
+                        text = userProfile.name.takeIf { it.isNotBlank() }
+                            ?.split(" ")?.mapNotNull { it.firstOrNull() }?.take(2)?.joinToString("")
+                            ?.uppercase() ?: "🎯",
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp
@@ -124,13 +126,13 @@ fun ProfileScreen(
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = userProfile.name,
+                        text = userProfile.name.ifBlank { "Your Name" },
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = userProfile.email,
+                        text = userProfile.email.ifBlank { "Add an email to your profile" },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

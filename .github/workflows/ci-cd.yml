@@ -1,0 +1,59 @@
+name: Android CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    name: Build APK → publish to web → Render auto-deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle (with dependency caching)
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Accept Android SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: speakora-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+
+      # ---------------- Continuous deployment (main only) ----------------
+      # The Render static site (https://speakora-tjjz.onrender.com) has
+      # autoDeploy enabled: pushing this commit redeploys the live site
+      # with the freshly built APK. [skip ci] prevents a workflow loop.
+      - name: Publish fresh APK to web/
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk web/speakora.apk
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/speakora.apk
+          if git diff --cached --quiet; then
+            echo "APK unchanged — nothing to publish"
+          else
+            git commit -m "ci: refresh speakora.apk [skip ci]"
+            git push
+          fi

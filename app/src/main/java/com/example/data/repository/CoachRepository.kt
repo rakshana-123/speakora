@@ -196,7 +196,8 @@ class CoachRepository(private val dao: CoachDao) {
         val profile = dao.getUserProfileOnce() ?: return@withContext false
         val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         val updated = profile.copy(
-            currentStreak = maxOf(profile.currentStreak, 18),
+            // A recovery restarts the streak from today instead of restoring a fabricated value.
+            currentStreak = if (profile.lastActiveDate == todayStr) profile.currentStreak else 1,
             lastActiveDate = todayStr,
             streakFrozenToday = false
         )
