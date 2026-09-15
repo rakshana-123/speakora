@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -21,7 +22,9 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,15 +34,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.appupdate.UpdateState
 import com.example.ui.screens.challenges.ChallengesScreen
 import com.example.ui.screens.coach.AiCoachScreen
 import com.example.ui.screens.home.HomeScreen
+import com.example.ui.screens.login.LoginScreen
 import com.example.ui.screens.practice.PracticeHubScreen
 import com.example.ui.screens.profile.ProfileScreen
 import com.example.ui.screens.progress.ProgressScreen
 import com.example.ui.screens.workout.ExercisePlayerScreen
 import com.example.ui.theme.PrimaryIndigo
+import com.example.ui.viewmodel.AuthState
 import com.example.ui.viewmodel.CoachViewModel
 
 enum class NavigationTab(val label: String, val icon: ImageVector, val tag: String) {
@@ -58,9 +65,80 @@ fun MainAppContainer(
 ) {
     var currentTab by remember { mutableStateOf(NavigationTab.HOME) }
     val activeExercise by viewModel.activeExercise.collectAsState()
+    val authState by viewModel.authState.collectAsState()
+    val authBusy by viewModel.authBusy.collectAsState()
+    val authError by viewModel.authError.collectAsState()
+    val updateState by viewModel.updateState.collectAsState()
+
+    // Look for a newer release every time the app starts (post-login).
+    LaunchedEffect(authState) {
+        if (authState is AuthState.LoggedIn) viewModel.checkForUpdates()
+    }
 
     Box(modifier = modifier.fillMaxSize()) {
-        Scaffold(
+        when (authState) {
+            AuthState.Loading, AuthState.LoggedOut -> LoginScreen(
+                isLoading = authState == AuthState.Loading || authBusy,
+                errorMessage = authError,
+                onLogin = viewModel::login,
+                onSignup = viewModel::signup
+            )
+
+            is AuthState.LoggedIn -> MainTabs(
+                viewModel = viewModel,
+                currentTab = currentTab,
+                onTabChange = { currentTab = it }
+            )
+        }
+
+        // In-app update prompt
+        val available = updateState as? UpdateState.Available
+        if (available != null) {
+            AlertDialog(
+                onDismissRequest = { /* remind on next check */ },
+                title = { Text("Update available 🎉") },
+                text = {
+                    Text(
+                        "Version ${available.info.versionName} is out.\n\n${available.info.changelog}"
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.downloadUpdate(available.info) }) {
+                        Text("Download & install", fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.dismissUpdateForSession() }) {
+                        Text("Later")
+                    }
+                }
+            )
+        }
+
+        // Focused Fullscreen Interactive Exercise Player Overlay
+        AnimatedVisibility(
+            visible = activeExercise != null,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            activeExercise?.let { exercise ->
+                ExercisePlayerScreen(
+                    exercise = exercise,
+                    viewModel = viewModel,
+                    onClose = { viewModel.closeExercise() }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MainTabs(
+    viewModel: CoachViewModel,
+    currentTab: NavigationTab,
+    onTabChange: (NavigationTab) -> Unit
+) {
+    Scaffold(
             bottomBar = {
                 NavigationBar(
                     containerColor = MaterialTheme.colorScheme.surface,
@@ -70,7 +148,7 @@ fun MainAppContainer(
                         val isSelected = currentTab == tab
                         NavigationBarItem(
                             selected = isSelected,
-                            onClick = { currentTab = tab },
+                            onClick = { onTabChange(tab) },
                             icon = {
                                 Icon(
                                     imageVector = tab.icon,
@@ -103,9 +181,9 @@ fun MainAppContainer(
                 when (currentTab) {
                     NavigationTab.HOME -> HomeScreen(
                         viewModel = viewModel,
-                        onNavigateToPractice = { currentTab = NavigationTab.PRACTICE },
-                        onNavigateToCoachChat = { currentTab = NavigationTab.COACH },
-                        onOpenRecovery = { currentTab = NavigationTab.CHALLENGES }
+                        onNavigateToPractice = { onTabChange(NavigationTab.PRACTICE) },
+                        onNavigateToCoachChat = { onTabChange(NavigationTab.COACH) },
+                        onOpenRecovery = { onTabChange(NavigationTab.CHALLENGES) }
                     )
                     NavigationTab.PRACTICE -> PracticeHubScreen(
                         viewModel = viewModel
@@ -125,20 +203,4 @@ fun MainAppContainer(
                 }
             }
         }
-
-        // Focused Fullscreen Interactive Exercise Player Overlay
-        AnimatedVisibility(
-            visible = activeExercise != null,
-            enter = fadeIn(),
-            exit = fadeOut()
-        ) {
-            activeExercise?.let { exercise ->
-                ExercisePlayerScreen(
-                    exercise = exercise,
-                    viewModel = viewModel,
-                    onClose = { viewModel.closeExercise() }
-                )
-            }
-        }
     }
-}

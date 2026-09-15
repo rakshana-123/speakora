@@ -9,12 +9,26 @@ import com.example.data.model.Achievement
 import com.example.data.model.Exercise
 import com.example.data.model.ExerciseCategory
 import com.example.data.model.PracticeSession
+import com.example.data.model.UserAccount
 import com.example.data.model.UserProfile
 import com.example.data.model.VocabularyWord
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CoachDao {
+    // User Accounts (login)
+    @Query("SELECT * FROM user_accounts WHERE username = :username LIMIT 1")
+    suspend fun getUserAccount(username: String): UserAccount?
+
+    @Query("SELECT * FROM user_accounts ORDER BY createdAt ASC")
+    suspend fun getAllUserAccounts(): List<UserAccount>
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertUserAccount(account: UserAccount): Long
+
+    @Query("SELECT COUNT(*) FROM user_accounts WHERE role = 'ADMIN'")
+    suspend fun countAdmins(): Int
+
     // User Profile
     @Query("SELECT * FROM user_profiles WHERE id = 1 LIMIT 1")
     fun getUserProfile(): Flow<UserProfile?>

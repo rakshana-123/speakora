@@ -8,6 +8,7 @@ import androidx.room.TypeConverters
 import com.example.data.model.Achievement
 import com.example.data.model.Exercise
 import com.example.data.model.PracticeSession
+import com.example.data.model.UserAccount
 import com.example.data.model.UserProfile
 import com.example.data.model.VocabularyWord
 
@@ -17,9 +18,10 @@ import com.example.data.model.VocabularyWord
         Exercise::class,
         VocabularyWord::class,
         PracticeSession::class,
-        Achievement::class
+        Achievement::class,
+        UserAccount::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

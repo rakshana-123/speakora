@@ -138,6 +138,36 @@
   .hide { display: none !important; }
   footer { text-align: center; color: var(--text2); font-size: 11px; padding: 18px 0 8px; }
   .kbd { font-size: 11px; background: var(--surface2); border: 1px solid var(--outline); padding: 2px 7px; border-radius: 6px; }
+
+  /* Update banner */
+  #updateBanner {
+    display: none; align-items: center; gap: 10px; flex-wrap: wrap;
+    background: linear-gradient(90deg,#064E3B,#065F46); border: 1px solid var(--emerald);
+    color: #D1FAE5; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; font-size: 13px;
+  }
+  #updateBanner button { margin-left: auto; }
+
+  /* Auth gate */
+  #authGate {
+    position: fixed; inset: 0; z-index: 200; background: var(--bg);
+    display: flex; align-items: center; justify-content: center; padding: 20px; overflow-y: auto;
+  }
+  .auth-card { width: 100%; max-width: 380px; }
+  .auth-logo { width: 76px; height: 76px; margin: 0 auto 14px; border-radius: 50%; background: linear-gradient(135deg,var(--indigo),var(--cyan)); display: flex; align-items: center; justify-content: center; font-size: 34px; }
+  .auth-title { text-align: center; font-size: 22px; font-weight: 800; }
+  .auth-sub { text-align: center; font-size: 12.5px; color: var(--text2); margin: 4px 0 18px; }
+  .auth-box { background: var(--surface); border: 1px solid var(--outline); border-radius: 18px; padding: 20px; }
+  .auth-box input { width: 100%; background: var(--surface2); border: 1px solid var(--outline); color: var(--text); border-radius: 10px; padding: 12px 14px; font-size: 14px; outline: none; margin: 6px 0; }
+  .auth-box input:focus { border-color: var(--indigo-l); }
+  .auth-hint { text-align: center; font-size: 11.5px; color: var(--text2); margin-top: 12px; }
+  .auth-err { color: #F87171; font-size: 12.5px; min-height: 16px; margin-top: 6px; }
+
+  /* Admin panel */
+  .admin-row { display: flex; justify-content: space-between; gap: 8px; padding: 9px 12px; background: var(--surface2); border-radius: 10px; margin-bottom: 6px; font-size: 13px; }
+  .role-tag { font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 99px; }
+  .role-tag.ADMIN { background: #064E3B; color: #6EE7B7; border: 1px solid var(--emerald); }
+  .role-tag.USER { background: var(--indigo-bg); color: #A5B4FC; border: 1px solid var(--indigo); }
+  .userchip { font-size: 11px; color: var(--text2); }
 </style>
 </head>
 <body>
@@ -148,10 +178,18 @@
     <h1>Speakora</h1>
     <div class="sub">AI Communication Coach</div>
   </div>
-  <div class="streak-pill">🔥 <span id="hdStreak">0</span></div>
+  <div class="userchip" id="whoami" style="margin-left:auto"></div>
+  <button id="logoutBtn" class="btn btn-ghost btn-sm hide" style="margin-left:8px">Log out</button>
+  <div class="streak-pill" id="streakPill">🔥 <span id="hdStreak">0</span></div>
 </header>
 
 <main>
+
+  <!-- Update banner (shown when latest.json is newer than this build) -->
+  <div id="updateBanner">
+    <span id="updateText">🆕 Update available</span>
+    <button class="btn btn-primary btn-sm" onclick="location.reload()">Refresh</button>
+  </div>
 
   <!-- ============ HOME ============ -->
   <section id="tab-home">
@@ -210,6 +248,29 @@
     </div>
   </section>
 
+  <!-- ============ ADMIN (visible to ADMIN role only) ============ -->
+  <section id="tab-admin" class="hide">
+    <div class="section-title" style="margin-top:4px">Admin console</div>
+    <div class="card">
+      <h3>🛡️ Administration</h3>
+      <div class="muted">Signed in as <b id="adminWho"></b> — administrator.</div>
+    </div>
+    <div class="card">
+      <h3>👥 Registered accounts <span class="userchip" id="acctCount"></span></h3>
+      <div id="acctList"></div>
+    </div>
+    <div class="card">
+      <h3>📦 App version &amp; updates</h3>
+      <div class="muted" id="versionInfo"></div>
+      <div style="margin-top:10px"><button class="btn btn-ghost btn-sm" id="webCheckUpdate">🔄 Check for updates</button></div>
+      <div class="muted" id="updateCheckResult" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <h3>📊 This device's usage</h3>
+      <div class="muted" id="adminStats"></div>
+    </div>
+  </section>
+
   <!-- ============ PROGRESS ============ -->
   <section id="tab-progress" class="hide">
     <div class="section-title" style="margin-top:4px">Activity — last 15 weeks</div>
@@ -236,7 +297,26 @@
   <button data-tab="practice"><span class="ic">🏋️</span>Practice</button>
   <button data-tab="coach"><span class="ic">🤖</span>Coach</button>
   <button data-tab="progress"><span class="ic">📈</span>Progress</button>
+  <button data-tab="admin" id="navAdmin" class="hide"><span class="ic">🛡️</span>Admin</button>
 </nav>
+
+<!-- Login / signup gate -->
+<div id="authGate">
+  <div class="auth-card">
+    <div class="auth-logo">🎤</div>
+    <div class="auth-title">Speakora</div>
+    <div class="auth-sub">AI Communication Coach</div>
+    <div class="auth-box">
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px" id="authModeTitle">Welcome back</div>
+      <input id="authUser" placeholder="Username" autocomplete="username">
+      <input id="authPass" type="password" placeholder="Password" autocomplete="current-password">
+      <div class="auth-err" id="authErr"></div>
+      <button class="btn btn-primary" style="width:100%;margin-top:6px" id="authSubmit">Log in</button>
+      <button class="btn btn-ghost" style="width:100%;margin-top:8px" id="authSwitch">New here? Create an account</button>
+      <div class="auth-hint">Admin demo access: <b>admin</b> / <b>admin123</b></div>
+    </div>
+  </div>
+</div>
 
 <div class="modal-bg hide" id="modalBg"><div class="modal" id="modalBox"></div></div>
 
@@ -344,6 +424,93 @@ function localRoleplay(reply){
   return (l.includes("understand")||l.includes("agree")||l.includes("prioritize"))
     ? ["I appreciate that you hear our urgency. If we release the MVP first in October, will the critical payment flow be 100% bug-free for launch day?","Strong empathetic validation! You diffused immediate panic and kept focus on solution delivery."]
     : ["That sounds risky. Our board expects a comprehensive launch. What guarantees do we have that the team won't face further delays?","Tip: Anchor your response with factual milestones and clear mitigation steps to reassure senior stakeholders."];
+}
+
+/* ================= Auth (login/signup/admin) ================= */
+const CURRENT_VERSION = { code: 2, name: "1.1" };
+const AUTH = {
+  accounts: () => JSON.parse(localStorage.getItem("speakora_accounts")||"[]"),
+  saveAccounts: (a) => localStorage.setItem("speakora_accounts", JSON.stringify(a)),
+  session: () => JSON.parse(localStorage.getItem("speakora_session")||"null"),
+  setSession: (s) => localStorage.setItem("speakora_session", JSON.stringify(s)),
+  clearSession: () => localStorage.removeItem("speakora_session"),
+  async hash(pass, salt){
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(salt + pass));
+    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,"0")).join("");
+  },
+  async seedAdmin(){
+    const a = AUTH.accounts();
+    if (!a.some(x => x.role === "ADMIN")) {
+      const salt = Math.random().toString(36).slice(2) + Date.now().toString(36);
+      a.push({ u: "admin", h: await AUTH.hash("admin123", salt), s: salt, role: "ADMIN", created: Date.now() });
+      AUTH.saveAccounts(a);
+    }
+  }
+};
+let authMode = "login";
+
+function showGate(show){
+  $("authGate").classList.toggle("hide", !show);
+  if (!show) afterAuthEnter();
+}
+function afterAuthEnter(){
+  const s = AUTH.session(); if (!s) return;
+  $("whoami").textContent = "👤 " + s.u + (s.role === "ADMIN" ? " 🛡️" : "");
+  $("logoutBtn").classList.remove("hide");
+  $("navAdmin").classList.toggle("hide", s.role !== "ADMIN");
+  if (s.role === "ADMIN") renderAdmin();
+}
+async function tryAuth(){
+  const u = $("authUser").value.trim(), p = $("authPass").value;
+  const err = m => { $("authErr").textContent = m; };
+  err("");
+  if (!u || !p) return err("Please fill in both fields");
+  const accounts = AUTH.accounts();
+  if (authMode === "login") {
+    const acct = accounts.find(a => a.u.toLowerCase() === u.toLowerCase());
+    if (!acct) return err("No account found — sign up first");
+    if (acct.h !== await AUTH.hash(p, acct.s)) return err("Incorrect password");
+    AUTH.setSession({ u: acct.u, role: acct.role });
+  } else {
+    if (u.length < 3) return err("Username must be at least 3 characters");
+    if (accounts.some(a => a.u.toLowerCase() === u.toLowerCase())) return err("That username is already taken");
+    if (p.length < 4) return err("Password must be at least 4 characters");
+    const salt = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    const acct = { u, h: await AUTH.hash(p, salt), s: salt, role: "USER", created: Date.now() };
+    accounts.push(acct); AUTH.saveAccounts(accounts);
+    AUTH.setSession({ u: acct.u, role: acct.role });
+  }
+  $("authPass").value = "";
+  showGate(false);
+}
+function renderAdmin(){
+  const accounts = AUTH.accounts(), s = AUTH.session();
+  $("adminWho").textContent = s?.u || "";
+  $("acctCount").textContent = "· " + accounts.length + " total";
+  $("acctList").innerHTML = accounts.map(a => `
+    <div class="admin-row">
+      <b>${esc(a.u)}</b>
+      <span class="role-tag ${a.role}">${a.role}</span>
+      <span class="userchip">${new Date(a.created).toLocaleDateString()}</span>
+    </div>`).join("") || '<div class="muted">No accounts yet.</div>';
+  $("versionInfo").innerHTML = `Web build: <b>v${CURRENT_VERSION.name}</b> (code ${CURRENT_VERSION.code})<br>Android APK: served from this site — the in-app updater reads <span class="kbd">latest.json</span>.`;
+  $("adminStats").innerHTML = `Drills completed: <b>${S.done.length}/${EXERCISES.length}</b> · XP: <b>${S.xp}</b> · Streak: <b>${streak()} day(s)</b> · Accounts on this device: <b>${accounts.length}</b>`;
+}
+async function checkWebUpdate(verbose){
+  try {
+    const r = await fetch("latest.json", { cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const j = await r.json();
+    if (j.versionCode > CURRENT_VERSION.code) {
+      $("updateText").textContent = `🆕 Version ${j.versionName} available — "${j.changelog}". Tap Refresh to load it.`;
+      $("updateBanner").style.display = "flex";
+      if (verbose) $("updateCheckResult").textContent = `Update to v${j.versionName} is available — banner shown at the top.`;
+    } else {
+      if (verbose) $("updateCheckResult").textContent = `✓ Up to date (latest is v${j.versionName}, code ${j.versionCode}).`;
+    }
+  } catch (e) {
+    if (verbose) $("updateCheckResult").textContent = "⚠ Could not reach latest.json — " + e.message;
+  }
 }
 
 /* ================= State ================= */
@@ -588,19 +755,45 @@ $("keyBtn").onclick=()=>{
 /* ================= Nav ================= */
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));
-  ["home","practice","coach","progress"].forEach(t=>$("tab-"+t).classList.toggle("hide", t!==b.dataset.tab));
+  ["home","practice","coach","progress","admin"].forEach(t=>$("tab-"+t).classList.toggle("hide", t!==b.dataset.tab));
   window.scrollTo({top:0});
 });
 $("modalBg").addEventListener("click",e=>{ if(e.target.id==="modalBg") closeExercise(); });
 
+/* ================= Auth & update wiring ================= */
+$("authSubmit").onclick = tryAuth;
+$("authPass").addEventListener("keydown",e=>{ if(e.key==="Enter") tryAuth(); });
+$("authSwitch").onclick = ()=>{
+  authMode = authMode === "login" ? "signup" : "login";
+  $("authModeTitle").textContent = authMode === "login" ? "Welcome back" : "Create your account";
+  $("authSubmit").textContent = authMode === "login" ? "Log in" : "Sign up";
+  $("authSwitch").textContent = authMode === "login" ? "New here? Create an account" : "I already have an account — Log in";
+  $("authErr").textContent = "";
+};
+$("logoutBtn").onclick = ()=>{
+  AUTH.clearSession();
+  $("whoami").textContent = "";
+  $("logoutBtn").classList.add("hide");
+  $("navAdmin").classList.add("hide");
+  $("tab-admin").classList.add("hide");
+  document.querySelector('nav button[data-tab="home"]').click();
+  showGate(true);
+};
+$("webCheckUpdate").onclick = ()=>checkWebUpdate(true);
+
 /* ================= Boot ================= */
-(function boot(){
+(async function boot(){
   if("serviceWorker" in navigator && location.protocol === "https:"){
     navigator.serviceWorker.register("sw.js").catch(()=>{});
   }
+  await AUTH.seedAdmin();
   if(!S.chat.length){ S.chat.push(["","Welcome! I'm **Aura**, your executive communication coach. Ask me about killing filler words, nailing interviews, writing sharper emails — or hit **Practice** for today's 10-minute workout. 🎯"]); save(); }
   S.chat.slice(0,8).forEach(([u,b])=>{ if(u==="") addMsg("bot", md(b)); else { addMsg("me",esc(u)); addMsg("bot",md(b)); } });
   renderAll();
+  // Login gate: show if no active session
+  showGate(!AUTH.session());
+  // Silent update check (banner only appears when a newer build exists)
+  checkWebUpdate(false);
 })();
 </script>
 </body>

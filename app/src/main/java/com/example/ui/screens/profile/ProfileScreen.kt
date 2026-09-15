@@ -18,15 +18,18 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -35,6 +38,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -53,9 +57,11 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.appupdate.UpdateState
 import com.example.ui.theme.PrimaryIndigo
 import com.example.ui.theme.SecondaryCyan
 import com.example.ui.theme.SuccessEmerald
+import com.example.ui.viewmodel.AuthState
 import com.example.ui.viewmodel.CoachViewModel
 
 @Composable
@@ -421,6 +427,141 @@ fun ProfileScreen(
                             )
                         }
                     }
+                }
+            }
+        }
+
+        // ---- Account, admin & in-app updates ----
+        val authState by viewModel.authState.collectAsState()
+        val updateState by viewModel.updateState.collectAsState()
+        val deviceAccounts by viewModel.deviceAccounts.collectAsState()
+        val loggedIn = authState as? AuthState.LoggedIn
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Text(
+                    text = "Account & App",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = if (loggedIn?.isAdmin == true) Icons.Default.AdminPanelSettings else Icons.Default.Person,
+                            contentDescription = null,
+                            tint = PrimaryIndigo,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = loggedIn?.username?.ifBlank { "user" } ?: "user",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = if (loggedIn?.isAdmin == true) "Administrator" else "Member",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (loggedIn?.isAdmin == true) SuccessEmerald else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                if (loggedIn?.isAdmin == true) {
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Text(
+                        text = "Accounts on this device (${deviceAccounts.size})",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    deviceAccounts.take(8).forEach { acct ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(acct.username, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                            Text(
+                                text = acct.role,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (acct.role == "ADMIN") SuccessEmerald else SecondaryCyan,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Button(
+                    onClick = { viewModel.checkForUpdates() },
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryIndigo),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.SystemUpdate, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Check for updates")
+                }
+
+                when (val u = updateState) {
+                    is UpdateState.Checking -> Text(
+                        "Checking for updates…",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                    is UpdateState.UpToDate -> Text(
+                        "✓ You are on the latest version",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = SuccessEmerald,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                    is UpdateState.Error -> Text(
+                        "⚠ ${u.message}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFFF87171),
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                    is UpdateState.Downloading -> Text(
+                        "⬇ Downloading… watch your notifications, then tap to install.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = SecondaryCyan,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                    else -> {}
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedButton(
+                    onClick = { viewModel.logout() },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Log out", color = Color(0xFFF87171))
                 }
             }
         }

@@ -46,16 +46,35 @@ jobs:
       # The Render static site (https://speakora-tjjz.onrender.com) has
       # autoDeploy enabled: pushing this commit redeploys the live site
       # with the freshly built APK. [skip ci] prevents a workflow loop.
-      - name: Publish fresh APK to web/
+      - name: Publish fresh APK + version manifest to web/
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          SITE_BASE: https://speakora-tjjz.onrender.com
         run: |
           cp app/build/outputs/apk/debug/app-debug.apk web/speakora.apk
+
+          # Version manifest consumed by the in-app updater (AppUpdateChecker)
+          # and the web update banner.
+          VERSION_CODE=$(grep -oP 'versionCode = \K\d+' app/build.gradle.kts)
+          VERSION_NAME=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          CHANGELOG=$(git log -1 --pretty=%s | tr -d '"')
+          RELEASED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          cat > web/latest.json <<EOF
+          {
+            "versionCode": $VERSION_CODE,
+            "versionName": "$VERSION_NAME",
+            "apkUrl": "$SITE_BASE/speakora.apk",
+            "changelog": "$CHANGELOG",
+            "releasedAt": "$RELEASED_AT"
+          }
+          EOF
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add web/speakora.apk
+          git add web/speakora.apk web/latest.json
           if git diff --cached --quiet; then
             echo "APK unchanged — nothing to publish"
           else
-            git commit -m "ci: refresh speakora.apk [skip ci]"
+            git commit -m "ci: refresh speakora.apk + latest.json (v$VERSION_NAME) [skip ci]"
             git push
           fi

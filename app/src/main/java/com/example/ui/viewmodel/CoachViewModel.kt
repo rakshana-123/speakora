@@ -6,6 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.data.ai.AudioEngine
 import com.example.data.ai.GeminiCoachService
 import com.example.data.ai.SpeechAnalyzer
+import com.example.data.appupdate.AppUpdateChecker
+import com.example.data.appupdate.UpdateInstaller
+import com.example.data.appupdate.UpdateState
 import com.example.data.local.CoachDatabase
 import com.example.data.model.Achievement
 import com.example.data.model.ChatMessage
@@ -14,8 +17,11 @@ import com.example.data.model.ExerciseCategory
 import com.example.data.model.ExerciseResult
 import com.example.data.model.ExerciseType
 import com.example.data.model.PracticeSession
+import com.example.data.model.UserAccount
 import com.example.data.model.UserProfile
 import com.example.data.model.VocabularyWord
+import com.example.data.repository.AuthRepository
+import com.example.data.repository.AuthResult
 import com.example.data.repository.CoachRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -27,12 +33,116 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+// ---- Authentication session exposed to the UI ----
+sealed class AuthState {
+    data object Loading : AuthState()
+    data object LoggedOut : AuthState()
+    data class LoggedIn(val username: String, val role: String) : AuthState() {
+        val isAdmin: Boolean get() = role == AuthRepository.ROLE_ADMIN
+    }
+}
+
 class CoachViewModel(application: Application) : AndroidViewModel(application) {
 
     private val database = CoachDatabase.getDatabase(application)
     private val repository = CoachRepository(database.coachDao())
+    private val authRepository = AuthRepository(application, database.coachDao())
     private val geminiService = GeminiCoachService()
     val audioEngine = AudioEngine(application)
+
+    // ---- Auth state ----
+    private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
+    val authState: StateFlow<AuthState> = _authState.asStateFlow()
+
+    private val _authBusy = MutableStateFlow(false)
+    val authBusy: StateFlow<Boolean> = _authBusy.asStateFlow()
+
+    private val _authError = MutableStateFlow<String?>(null)
+    val authError: StateFlow<String?> = _authError.asStateFlow()
+
+    // Accounts on this device — populated for the admin panel.
+    private val _deviceAccounts = MutableStateFlow<List<UserAccount>>(emptyList())
+    val deviceAccounts: StateFlow<List<UserAccount>> = _deviceAccounts.asStateFlow()
+
+    // ---- In-app update state ----
+    private val _updateState = MutableStateFlow<UpdateState>(UpdateState.Idle)
+    val updateState: StateFlow<UpdateState> = _updateState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            authRepository.ensureAdminSeeded()
+            val session = authRepository.currentSession()
+            _authState.value = session
+                ?.let { AuthState.LoggedIn(it.first, it.second) }
+                ?: AuthState.LoggedOut
+            if (session != null) refreshAccountsForAdmin()
+        }
+    }
+
+    fun login(username: String, password: String) {
+        viewModelScope.launch {
+            _authBusy.value = true
+            _authError.value = null
+            val result = authRepository.login(username, password)
+            _authBusy.value = false
+            when (result) {
+                is AuthResult.Success -> {
+                    authRepository.saveSession(result.username, result.role)
+                    _authState.value = AuthState.LoggedIn(result.username, result.role)
+                    refreshAccountsForAdmin()
+                }
+                is AuthResult.Error -> _authError.value = result.message
+            }
+        }
+    }
+
+    fun signup(username: String, password: String) {
+        viewModelScope.launch {
+            _authBusy.value = true
+            _authError.value = null
+            val result = authRepository.signup(username, password)
+            _authBusy.value = false
+            when (result) {
+                is AuthResult.Success -> {
+                    authRepository.saveSession(result.username, result.role)
+                    _authState.value = AuthState.LoggedIn(result.username, result.role)
+                    refreshAccountsForAdmin()
+                }
+                is AuthResult.Error -> _authError.value = result.message
+            }
+        }
+    }
+
+    fun logout() {
+        authRepository.logout()
+        _authState.value = AuthState.LoggedOut
+        _deviceAccounts.value = emptyList()
+    }
+
+    private suspend fun refreshAccountsForAdmin() {
+        val state = _authState.value
+        if (state is AuthState.LoggedIn && state.isAdmin) {
+            _deviceAccounts.value = authRepository.allAccounts()
+        }
+    }
+
+    fun checkForUpdates() {
+        viewModelScope.launch {
+            _updateState.value = UpdateState.Checking
+            _updateState.value = AppUpdateChecker.check()
+        }
+    }
+
+    /** Hides the update dialog until the next real check. */
+    fun dismissUpdateForSession() {
+        _updateState.value = UpdateState.Idle
+    }
+
+    fun downloadUpdate(info: com.example.data.appupdate.UpdateInfo) {
+        val context = getApplication<Application>()
+        _updateState.value = UpdateState.Downloading
+        UpdateInstaller.downloadAndInstall(context, info)
+    }
 
     val userProfile: StateFlow<UserProfile> = repository.userProfile
         .filterNotNull()
