@@ -1,5 +1,7 @@
 package com.example.ui.screens.workout
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -79,7 +81,20 @@ fun ExercisePlayerScreen(
     val isAiThinking by viewModel.isAiThinking.collectAsState()
     val roleplayMessages by viewModel.roleplayMessages.collectAsState()
 
-    var userSpeechInput by remember { mutableStateOf(exercise.sampleIdealAnswer) }
+    // Real microphone capture requires a runtime permission grant.
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var hasMicPermission by remember {
+        mutableStateOf(
+            androidx.core.content.ContextCompat.checkSelfPermission(
+                context, android.Manifest.permission.RECORD_AUDIO
+            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        )
+    }
+    val micPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted -> hasMicPermission = granted }
+
+    var userSpeechInput by remember { mutableStateOf("") }
     var userWritingInput by remember { mutableStateOf("") }
     var selectedQuizOption by remember { mutableStateOf<String?>(null) }
     var roleplayReplyText by remember { mutableStateOf("") }
@@ -416,8 +431,8 @@ fun ExercisePlayerScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // Timer text
-                        val seconds = (recordingSeconds / 5)
+                        // Timer text (recordingSeconds is real elapsed seconds)
+                        val seconds = recordingSeconds
                         val mins = seconds / 60
                         val remSecs = seconds % 60
                         Text(
@@ -439,8 +454,10 @@ fun ExercisePlayerScreen(
                                 onClick = {
                                     if (isRecording) {
                                         viewModel.stopRecording()
-                                    } else {
+                                    } else if (hasMicPermission) {
                                         viewModel.startRecording()
+                                    } else {
+                                        micPermissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO)
                                     }
                                 },
                                 shape = CircleShape,

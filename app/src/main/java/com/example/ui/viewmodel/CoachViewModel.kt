@@ -278,6 +278,7 @@ class CoachViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun startRecording() {
+        if (!beginMicCapture()) return
         _isRecording.value = true
         _recordingSeconds.value = 0
         _audioAmplitudes.value = emptyList()
@@ -286,9 +287,9 @@ class CoachViewModel(application: Application) : AndroidViewModel(application) {
         recordingJob = viewModelScope.launch {
             while (_isRecording.value) {
                 delay(200)
-                _recordingSeconds.value += 1
-                val randomAmp = (0.2f + (Math.random().toFloat() * 0.8f))
-                _audioAmplitudes.value = (_audioAmplitudes.value + randomAmp).takeLast(28)
+                _recordingSeconds.value = ((System.currentTimeMillis() - recordingStartMs) / 1000).toInt()
+                val amp = currentMicAmplitude()
+                _audioAmplitudes.value = (_audioAmplitudes.value + amp).takeLast(28)
             }
         }
     }
@@ -296,20 +297,80 @@ class CoachViewModel(application: Application) : AndroidViewModel(application) {
     fun stopRecording() {
         _isRecording.value = false
         recordingJob?.cancel()
+        endMicCapture()
+    }
+
+    // ---- Real microphone capture (waveform + timing) ----
+    private var mediaRecorder: android.media.MediaRecorder? = null
+    private var recordingStartMs: Long = 0
+
+    private fun beginMicCapture(): Boolean {
+        if (mediaRecorder != null) return true
+        return try {
+            val recorder = if (android.os.Build.VERSION.SDK_INT >= 31) {
+                android.media.MediaRecorder(getApplication())
+            } else {
+                @Suppress("DEPRECATION")
+                android.media.MediaRecorder()
+            }
+            recorder.setAudioSource(android.media.MediaRecorder.AudioSource.MIC)
+            recorder.setOutputFormat(android.media.MediaRecorder.OutputFormat.AMR_NB)
+            recorder.setAudioEncoder(android.media.MediaRecorder.AudioEncoder.AMR_NB)
+            recorder.setOutputFile(getApplication<Application>().cacheDir.resolve("speakora_mic.tmp").absolutePath)
+            recorder.prepare()
+            recorder.start()
+            mediaRecorder = recorder
+            recordingStartMs = System.currentTimeMillis()
+            true
+        } catch (_: Exception) {
+            // Mic unavailable or permission not granted — stay on the typed-transcript flow.
+            mediaRecorder = null
+            false
+        }
+    }
+
+    private fun currentMicAmplitude(): Float {
+        val raw = try {
+            mediaRecorder?.maxAmplitude ?: 0
+        } catch (_: Exception) {
+            0
+        }
+        return (raw / 32767f).coerceIn(0.02f, 1f)
+    }
+
+    private fun endMicCapture() {
+        try {
+            mediaRecorder?.stop()
+        } catch (_: Exception) {
+            // stop() throws if no audio was captured — safe to ignore.
+        }
+        try {
+            mediaRecorder?.release()
+        } catch (_: Exception) {
+        }
+        mediaRecorder = null
     }
 
     fun finishSpeakingExercise(transcript: String? = null) {
         stopRecording()
         val currentEx = _activeExercise.value ?: return
-        val effectiveTranscript = if (!transcript.isNullOrBlank()) {
-            transcript
-        } else {
-            currentEx.sampleIdealAnswer.ifBlank {
-                "In my perspective, we must align our strategic roadmap with verified customer telemetry. We cut onboarding latency by 35% and continue to prioritize core user experience."
-            }
+        val effectiveTranscript = transcript?.trim().orEmpty()
+
+        if (effectiveTranscript.isEmpty()) {
+            // Nothing was said or typed — never fabricate a response to analyze.
+            _exerciseResult.value = com.example.data.model.ExerciseResult(
+                exerciseId = currentEx.id,
+                score = 0,
+                userResponse = "",
+                transcript = "",
+                feedback = "No speech captured. Record yourself, then type what you actually said in the transcript box so the coach can score it.",
+                areasToImprove = listOf("Record the drill out loud, then transcribe it honestly — the analysis is only as good as your input."),
+                xpEarned = 0
+            )
+            return
         }
 
-        val duration = _recordingSeconds.value / 5 // convert 200ms ticks to seconds
+        val duration = ((System.currentTimeMillis() - recordingStartMs) / 1000).toInt().coerceAtLeast(1)
         val result = SpeechAnalyzer.analyzeSpeech(
             transcript = effectiveTranscript,
             durationSeconds = if (duration > 5) duration else 35,

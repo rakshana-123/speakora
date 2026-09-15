@@ -1,7 +1,6 @@
 package com.example.data.local
 
 import com.example.data.model.Achievement
-import com.example.data.model.CommunityRoom
 import com.example.data.model.Exercise
 import com.example.data.model.ExerciseCategory
 import com.example.data.model.ExerciseType
@@ -384,50 +383,4 @@ object SeedData {
         )
     )
 
-    val communityRooms = listOf(
-        CommunityRoom(
-            id = "room_1",
-            title = "Executive & Startup Pitch Practice",
-            topic = "Pitching your idea in under 90 seconds with instant peer feedback",
-            description = "A supportive room where founders and team leads take turns delivering 90-second pitches and receiving constructive feedback.",
-            participantsCount = 14,
-            hostName = "Sarah L. (Coach)",
-            isLive = true,
-            tags = listOf("Pitch", "Startup", "Confidence"),
-            roomType = "Stage Room"
-        ),
-        CommunityRoom(
-            id = "room_2",
-            title = "Toastmasters Impromptu Table Topics",
-            topic = "Random communication prompt, 1 minute to answer with no prep",
-            description = "Practice quick thinking, structured delivery, and eliminating filler words when caught off guard.",
-            participantsCount = 28,
-            hostName = "Marcus K.",
-            isLive = true,
-            tags = listOf("Impromptu", "Fluency", "Fun"),
-            roomType = "Open Circle"
-        ),
-        CommunityRoom(
-            id = "room_3",
-            title = "Job Interview & Behavioral Simulation",
-            topic = "Answering 'Tell me about a time you failed' using STAR method",
-            description = "Live mock interviews with actionable scoring on composure, clarity, and conciseness.",
-            participantsCount = 19,
-            hostName = "Elena R. (HR Lead)",
-            isLive = true,
-            tags = listOf("Career", "Interviews", "STAR"),
-            roomType = "Workshop"
-        ),
-        CommunityRoom(
-            id = "room_4",
-            title = "Casual Conversational English Lounge",
-            topic = "Small talk, humor, pop culture, and travel storytelling",
-            description = "Low-pressure open discussion to build natural casual fluency and spontaneous speech.",
-            participantsCount = 35,
-            hostName = "David B.",
-            isLive = true,
-            tags = listOf("Casual", "Social", "Storytelling"),
-            roomType = "Casual Lounge"
-        )
-    )
 }
